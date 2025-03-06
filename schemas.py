@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, validator
 from typing import List
 from datetime import datetime
 
@@ -49,6 +49,11 @@ class ProductResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+    @validator('tags', pre=True)
+    def extract_tag_names(cls, tags):
+        return [tag.name if hasattr(tag, 'name') else tag for tag in tags]
+    
 
 # ------------------- CART SCHEMAS -------------------
 class CartItemCreate(BaseModel):

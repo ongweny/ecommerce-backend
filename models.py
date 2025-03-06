@@ -29,21 +29,18 @@ class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
     description = Column(String, nullable=False)
     price = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
     category = Column(String, nullable=False)
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
 
-    cart_items = relationship("Cart", back_populates="product", cascade="all, delete-orphan")  # In cart
-    orders = relationship("Order", back_populates="product", cascade="all, delete-orphan")  # Ordered products
-
 class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, nullable=False)
+    name = Column(String, unique=True, index=True, nullable=False)
     products = relationship("Product", secondary=product_tags, back_populates="tags")
 
 class Cart(Base):
