@@ -34,7 +34,13 @@ class Product(Base):
     price = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
     category = Column(String, nullable=False)
+
+    # ✅ Many-to-Many Relationship with Tags
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
+
+    # ✅ One-to-Many Relationship with Cart and Orders
+    cart_items = relationship("Cart", back_populates="product", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="product", cascade="all, delete-orphan")
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -51,6 +57,7 @@ class Cart(Base):
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
 
+    # ✅ Proper relationships
     user = relationship("User", back_populates="cart_items")
     product = relationship("Product", back_populates="cart_items")
 
@@ -64,5 +71,6 @@ class Order(Base):
     total_price = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # ✅ Proper relationships
     user = relationship("User", back_populates="orders")
     product = relationship("Product", back_populates="orders")
