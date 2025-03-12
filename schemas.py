@@ -29,6 +29,14 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# ------------------- TAG SCHEMA -------------------
+class TagResponse(BaseModel):
+    id: int
+    name: str
+    
+    class Config:
+        orm_mode = True
+
 # ------------------- PRODUCT SCHEMAS -------------------
 class ProductCreate(BaseModel):
     name: str
@@ -45,15 +53,14 @@ class ProductResponse(BaseModel):
     price: float
     stock: int
     category: str
-    tags: List[str] = []
+    tags: List[TagResponse] = []
 
     class Config:
         orm_mode = True
 
     @validator('tags', pre=True)
     def extract_tag_names(cls, tags):
-        return [tag.name if hasattr(tag, 'name') else tag for tag in tags]
-    
+        return [{'id': tag.id, 'name': tag.name} if hasattr(tag, 'name') else tag for tag in tags]
 
 # ------------------- CART SCHEMAS -------------------
 class CartItemCreate(BaseModel):
@@ -61,18 +68,23 @@ class CartItemCreate(BaseModel):
     quantity: int
 
 class CartItemResponse(BaseModel):
-    id: int
-    product_id: int
+    id: int  # ✅ Kept `cart.id`
+    product_id: int  # ✅ Changed back to product_id instead of full ProductResponse
+    product_name: str  # ✅ Included for easier frontend use
+    product_price: float  # ✅ Included for easier frontend use
     quantity: int
-    product_name: str
-    product_price: float
 
     class Config:
         orm_mode = True
 
 # ------------------- ORDER SCHEMAS -------------------
+class OrderCreate(BaseModel):
+    product_id: int
+    quantity: int
+
 class OrderResponse(BaseModel):
     id: int
+    user_id: int
     product_id: int
     quantity: int
     total_price: float

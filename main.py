@@ -3,7 +3,7 @@ import logging
 from auth import router as auth_router
 from admin import router as admin_router
 from cart import router as cart_router
-from database import engine, get_db
+from database import engine
 from models import Base, User
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -38,7 +38,7 @@ create_default_admin()
 
 # ✅ Include all routers
 app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
-app.include_router(admin_router, prefix="/admin", tags=["Admin"])  # 👈 This now includes product routes
+app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(cart_router, prefix="/cart", tags=["Cart"])
 
 @app.get("/")

@@ -3,12 +3,12 @@ from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime
 
-# Association table for product tags (many-to-many relationship)
+# ✅ Association table for product tags (many-to-many relationship)
 product_tags = Table(
     "product_tags",
     Base.metadata,
-    Column("product_id", Integer, ForeignKey("products.id")),
-    Column("tag_id", Integer, ForeignKey("tags.id"))
+    Column("product_id", Integer, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True)
 )
 
 class User(Base):
@@ -22,8 +22,9 @@ class User(Base):
     phone_number = Column(String, unique=True, nullable=False)
     is_admin = Column(Boolean, default=False)  # Admin flag
 
-    cart_items = relationship("Cart", back_populates="user", cascade="all, delete-orphan")  # User's cart
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")  # User's orders
+    # ✅ Cascade delete behavior added
+    cart_items = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
 
 class Product(Base):
     __tablename__ = "products"
@@ -53,8 +54,8 @@ class Cart(Base):
     __tablename__ = "cart"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     quantity = Column(Integer, nullable=False, default=1)
 
     # ✅ Proper relationships
@@ -65,8 +66,8 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     quantity = Column(Integer, nullable=False)
     total_price = Column(Float, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
