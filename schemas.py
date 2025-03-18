@@ -1,8 +1,7 @@
 from pydantic import BaseModel, EmailStr, validator
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
-# ------------------- USER SCHEMAS -------------------
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -29,7 +28,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# ------------------- TAG SCHEMA -------------------
 class TagResponse(BaseModel):
     id: int
     name: str
@@ -37,13 +35,13 @@ class TagResponse(BaseModel):
     class Config:
         orm_mode = True
 
-# ------------------- PRODUCT SCHEMAS -------------------
 class ProductCreate(BaseModel):
     name: str
     description: str
     price: float
     stock: int
     category: str
+    image_url: Optional[str] = None  # ✅ Made image optional
     tags: List[str] = []
 
 class ProductResponse(BaseModel):
@@ -53,6 +51,7 @@ class ProductResponse(BaseModel):
     price: float
     stock: int
     category: str
+    image_url: Optional[str] = None
     tags: List[TagResponse] = []
 
     class Config:
@@ -62,22 +61,20 @@ class ProductResponse(BaseModel):
     def extract_tag_names(cls, tags):
         return [{'id': tag.id, 'name': tag.name} if hasattr(tag, 'name') else tag for tag in tags]
 
-# ------------------- CART SCHEMAS -------------------
 class CartItemCreate(BaseModel):
     product_id: int
     quantity: int
 
 class CartItemResponse(BaseModel):
-    id: int  # ✅ Kept `cart.id`
-    product_id: int  # ✅ Changed back to product_id instead of full ProductResponse
-    product_name: str  # ✅ Included for easier frontend use
-    product_price: float  # ✅ Included for easier frontend use
+    id: int
+    product_id: int
+    product_name: str
+    product_price: float
     quantity: int
 
     class Config:
         orm_mode = True
 
-# ------------------- ORDER SCHEMAS -------------------
 class OrderCreate(BaseModel):
     product_id: int
     quantity: int

@@ -16,7 +16,7 @@ router = APIRouter(tags=["Authentication"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Token expiration time (30 minutes)
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 3000
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     to_encode = data.copy()

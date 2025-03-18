@@ -20,11 +20,12 @@ class User(Base):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     phone_number = Column(String, unique=True, nullable=False)
-    is_admin = Column(Boolean, default=False)  # Admin flag
+    is_admin = Column(Boolean, default=False)
 
     # ✅ Cascade delete behavior added
     cart_items = relationship("Cart", back_populates="user", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    saved_items = relationship("SavedItem", back_populates="user", cascade="all, delete-orphan")  # ✅ Added saved items
 
 class Product(Base):
     __tablename__ = "products"
@@ -35,13 +36,15 @@ class Product(Base):
     price = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False)
     category = Column(String, nullable=False)
+    image_url = Column(String, nullable=True) 
 
     # ✅ Many-to-Many Relationship with Tags
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
 
-    # ✅ One-to-Many Relationship with Cart and Orders
+    # ✅ One-to-Many Relationship with Cart, Orders, and Saved Items
     cart_items = relationship("Cart", back_populates="product", cascade="all, delete-orphan")
     orders = relationship("Order", back_populates="product", cascade="all, delete-orphan")
+    saved_items = relationship("SavedItem", back_populates="product", cascade="all, delete-orphan")  # ✅ Added saved items
 
 class Tag(Base):
     __tablename__ = "tags"
@@ -75,3 +78,14 @@ class Order(Base):
     # ✅ Proper relationships
     user = relationship("User", back_populates="orders")
     product = relationship("Product", back_populates="orders")
+
+class SavedItem(Base):
+    __tablename__ = "saved_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
+
+    # ✅ Relationship with User and Product
+    user = relationship("User", back_populates="saved_items")
+    product = relationship("Product", back_populates="saved_items")
