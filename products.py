@@ -65,13 +65,21 @@ async def add_product(
 
         image_url = f"{BASE_URL}/uploads/{unique_filename}"
 
+    # ✅ Create product first
     new_product = Product(
-        name=name, price=price, stock=stock, description=description, category=category, image_url=image_url
+        name=name,
+        price=price,
+        stock=stock,
+        description=description,
+        category=category,
+        image_url=image_url,
+        tags=[]  # Initialize empty list for tags
     )
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
 
+    # ✅ Associate tags **after** creating the product
     for tag_name in tags_list:
         tag = db.query(Tag).filter(Tag.name == tag_name).first()
         if not tag:
@@ -79,18 +87,9 @@ async def add_product(
             db.add(tag)
             db.commit()
             db.refresh(tag)
-        new_product.tags.append(tag)
-    
-    db.commit()
+        new_product.tags.append(tag)  # Append to relationship
+
+    db.commit()  # Final commit after all associations are done
+    db.refresh(new_product)  # Refresh to get updated data
+
     return new_product
-
-@router.get("/products")
-def get_all_products(db: Session = Depends(get_db)):
-    return db.query(Product).all()
-
-@router.get("/products/category/{category}")
-def get_products_by_category(category: str, db: Session = Depends(get_db)):
-    products = db.query(Product).filter(Product.category == category).all()
-    if not products:
-        raise HTTPException(status_code=404, detail="No products found in this category")
-    return products
