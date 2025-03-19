@@ -6,6 +6,7 @@ import os
 from uuid import uuid4
 from typing import Optional, List
 import json
+# from fastapi.staticfiles import StaticFiles
 
 router = APIRouter()
 
@@ -37,23 +38,30 @@ async def add_product(
     stock: int = Form(...),
     description: str = Form(...),
     category: str = Form(...),
-    tags: str = Form("[]"),
-    file: Optional[UploadFile] = None,
+    tags: Optional[str] = Form(None),
+    image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
+    print(f"📩 Received Form Data: name={name}, price={price}, stock={stock}, description={description}, category={category}")
+    print(f"Tags: {tags}, Image: {image.filename if image else 'No Image'}")
+
     if not name or not description or not category:
         raise HTTPException(status_code=400, detail="All fields are required.")
 
-    try:
-        tags_list = json.loads(tags)
-        if not isinstance(tags_list, list):
-            raise ValueError
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid tags format. Must be a JSON list.")
+    # ✅ Handle tags properly
+    tags_list = []
+    if tags:
+        try:
+            tags_list = json.loads(tags)  # Convert JSON string to list
+            if not isinstance(tags_list, list):
+                raise ValueError
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tags format. Must be a JSON list.")
 
+    # ✅ Handle image upload properly
     image_url = None
-    if file:
-        file_extension = file.filename.split(".")[-1].lower()
+    if image:
+        file_extension = image.filename.split(".")[-1].lower()
         if file_extension not in ["jpg", "jpeg", "png", "webp"]:
             raise HTTPException(status_code=400, detail="Invalid image format")
 
@@ -61,35 +69,28 @@ async def add_product(
         file_path = os.path.join(UPLOAD_DIR, unique_filename)
 
         with open(file_path, "wb") as buffer:
-            buffer.write(await file.read())
+            buffer.write(await image.read())
 
         image_url = f"{BASE_URL}/uploads/{unique_filename}"
 
-    # ✅ Create product first
+    # ✅ Save to DB
     new_product = Product(
         name=name,
         price=price,
         stock=stock,
         description=description,
         category=category,
-        image_url=image_url,
-        tags=[]  # Initialize empty list for tags
+        image_url=image_url
     )
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
 
-    # ✅ Associate tags **after** creating the product
-    for tag_name in tags_list:
-        tag = db.query(Tag).filter(Tag.name == tag_name).first()
-        if not tag:
-            tag = Tag(name=tag_name)
-            db.add(tag)
-            db.commit()
-            db.refresh(tag)
-        new_product.tags.append(tag)  # Append to relationship
+    return {"message": "Product added successfully", "product": new_product}
 
-    db.commit()  # Final commit after all associations are done
-    db.refresh(new_product)  # Refresh to get updated data
+# ----------------- Get All Products Endpoint -----------------
+@router.get("/products")
+async def get_products(db: Session = Depends(get_db)):
+    products = db.query(Product).all()
+    return products
 
-    return new_product

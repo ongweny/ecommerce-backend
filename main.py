@@ -3,21 +3,25 @@ import logging
 from auth import router as auth_router
 from admin import router as admin_router
 from cart import router as cart_router
-from products import router as products_router  # ✅ Import the new router
+from products import router as products_router
 from database import engine
 from models import Base, User
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
+
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
 
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 # ✅ Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -65,3 +69,8 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     return response
  
+UPLOAD_FOLDER = "uploads"
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
