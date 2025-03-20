@@ -56,7 +56,7 @@ class ProductResponse(BaseModel):
     stock: int
     category: str
     image_url: Optional[str] = None
-    tags: List[str]  # ✅ Changed to return tag names directly
+    tags: Optional[List[str]] = []
 
     class Config:
         orm_mode = True

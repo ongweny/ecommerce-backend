@@ -38,7 +38,7 @@ async def add_product(
     stock: int = Form(...),
     description: str = Form(...),
     category: str = Form(...),
-    tags: Optional[str] = Form(None),
+    tags: Optional[str] = Form(None),  # JSON string list of tags
     image: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
@@ -48,7 +48,7 @@ async def add_product(
     if not name or not description or not category:
         raise HTTPException(status_code=400, detail="All fields are required.")
 
-    # ✅ Handle tags properly
+    # ✅ Parse Tags (ensure it's a list)
     tags_list = []
     if tags:
         try:
@@ -58,7 +58,7 @@ async def add_product(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid tags format. Must be a JSON list.")
 
-    # ✅ Handle image upload properly
+    # ✅ Process Image
     image_url = None
     if image:
         file_extension = image.filename.split(".")[-1].lower()
@@ -73,7 +73,7 @@ async def add_product(
 
         image_url = f"{BASE_URL}/uploads/{unique_filename}"
 
-    # ✅ Save to DB
+    # ✅ Create Product
     new_product = Product(
         name=name,
         price=price,
@@ -86,11 +86,38 @@ async def add_product(
     db.commit()
     db.refresh(new_product)
 
+    # ✅ Associate Tags with Product
+    for tag_name in tags_list:
+        tag = db.query(Tag).filter_by(name=tag_name).first()
+        if not tag:
+            tag = Tag(name=tag_name)
+            db.add(tag)
+            db.commit()
+            db.refresh(tag)
+        new_product.tags.append(tag)
+
+    db.commit()
+    db.refresh(new_product)
+
     return {"message": "Product added successfully", "product": new_product}
 
 # ----------------- Get All Products Endpoint -----------------
 @router.get("/products")
 async def get_products(db: Session = Depends(get_db)):
     products = db.query(Product).all()
-    return products
+
+    product_list = []
+    for product in products:
+        product_list.append({
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "stock": product.stock,
+            "description": product.description,
+            "category": product.category,
+            "image_url": product.image_url,
+            "tags": [tag.name for tag in product.tags]
+        })
+
+    return product_list
 

@@ -37,6 +37,7 @@ class Product(Base):
     stock = Column(Integer, nullable=False)
     category = Column(String, nullable=False)
     image_url = Column(String, nullable=True) 
+    # tags = Column(String, nullable=True)
 
     # ✅ Many-to-Many Relationship with Tags
     tags = relationship("Tag", secondary=product_tags, back_populates="products")
@@ -50,9 +51,11 @@ class Tag(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True, nullable=False)
-    products = relationship("Product", secondary=product_tags, back_populates="tags")
+    name = Column(String, nullable=False)
+    # product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"))
 
+    products = relationship("Product", secondary=product_tags, back_populates="tags")
+    
 class Cart(Base):
     __tablename__ = "cart"
 
